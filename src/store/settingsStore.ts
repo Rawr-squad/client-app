@@ -17,6 +17,20 @@ export const useSettingsStore = create<SettingsState>()(
 			setRefreshInterval: (interval) => set({ refreshInterval: interval }),
 			setAutoRefresh: (enabled) => set({ autoRefresh: enabled }),
 		}),
-		{ name: 'settings-storage' }
+		{
+			name: 'settings-storage',
+			storage: {
+				getItem: (name) => {
+					const str = localStorage.getItem(name);
+					return str ? JSON.parse(str) : null;
+				},
+				setItem: (name, value) => {
+					localStorage.setItem(name, JSON.stringify(value));
+				},
+				removeItem: (name) => {
+					localStorage.removeItem(name);
+				},
+			},
+		}
 	)
 );

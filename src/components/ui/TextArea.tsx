@@ -22,7 +22,7 @@ export const Textarea: React.FC<TextareaProps> = ({
 				</label>
 			)}
 			<textarea
-				className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${className}`}
+				className={`bg-white rounded-full px-4 py-3.5 w-full max-w-xs text-black transition-all duration-300 ease-cubic-bezier shadow-sm hover:shadow-md hover:-translate-y-0.5 focus:shadow-lg focus:-translate-y-1 focus:outline-none focus:bg-white placeholder:text-[#b4b4b4] placeholder:font-normal ${className}`}
 				{...props}
 			/>
 		</div>

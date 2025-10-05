@@ -9,6 +9,7 @@ interface MasterPasswordState {
 	unlockDuration: number;
 	passwordHash: string | null;
 	isInitialized: boolean;
+
 	unlock: (password: string) => Promise<boolean>;
 	lock: () => void;
 	checkLock: () => boolean;
@@ -34,7 +35,6 @@ export const useMasterPasswordStore = create<MasterPasswordState>()(
 				const { passwordHash, verifyCurrentPassword } = get();
 
 				if (!passwordHash) {
-					// No master password set yet
 					set({ isUnlocked: true, lastUnlockTime: Date.now() });
 					return true;
 				}
@@ -62,14 +62,12 @@ export const useMasterPasswordStore = create<MasterPasswordState>()(
 				const { isUnlocked, lastUnlockTime, unlockDuration, passwordHash } =
 					get();
 
-				// If no password is set, always allow access
 				if (!passwordHash) return true;
 
 				if (!isUnlocked || !lastUnlockTime) {
 					return false;
 				}
 
-				// Check if unlock period has expired
 				const isExpired = Date.now() - lastUnlockTime > unlockDuration;
 				if (isExpired) {
 					get().lock();

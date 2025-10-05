@@ -1,11 +1,10 @@
 // src/components/RequestAccessModal.tsx
 import React, { useState } from 'react';
-
 import { ErrorAlert } from './ui/ErrorAlert';
-import { useAccessRequestStore } from '../store/accessRequestsStore';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/TextArea';
+import { useRequestAccess } from '../hooks/useAccessRequests';
 
 interface AccessRequestModalProps {
 	isOpen: boolean;
@@ -17,29 +16,40 @@ export const AccessRequestModal: React.FC<AccessRequestModalProps> = ({
 	onClose,
 }) => {
 	const [secretName, setSecretName] = useState('');
-	const [service, setService] = useState('');
-	const [expiresAt, setExpiresAt] = useState('');
+	const [period, setPeriod] = useState(0);
 	const [description, setDescription] = useState('');
 
-	const { requestAccess, loading, error } = useAccessRequestStore();
+	const { mutate: requestAccess, isPending, error, reset } = useRequestAccess();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		await requestAccess({
-			secretName,
-			service,
-			expiresAt,
-			description,
-		});
+		// Reset any previous errors
+		reset();
 
-		if (!error) {
-			setSecretName('');
-			setService('');
-			setExpiresAt('');
-			setDescription('');
-			onClose();
-		}
+		requestAccess(
+			{
+				secretName,
+
+				period,
+				description,
+			},
+			{
+				onSuccess: () => {
+					// Reset form and close modal on success
+					setSecretName('');
+					setPeriod(0);
+					setDescription('');
+					onClose();
+				},
+			}
+		);
+	};
+
+	const handleClose = () => {
+		// Reset mutation state when closing
+		reset();
+		onClose();
 	};
 
 	if (!isOpen) return null;
@@ -53,7 +63,7 @@ export const AccessRequestModal: React.FC<AccessRequestModalProps> = ({
 							Request Secret Access
 						</h3>
 						<button
-							onClick={onClose}
+							onClick={handleClose}
 							className='text-gray-400 hover:text-gray-600 transition-colors'
 						>
 							<svg
@@ -72,47 +82,52 @@ export const AccessRequestModal: React.FC<AccessRequestModalProps> = ({
 						</button>
 					</div>
 
-					{error && <ErrorAlert message={error} />}
+					{error && (
+						<ErrorAlert
+							message={error.message || 'Failed to submit access request'}
+						/>
+					)}
 
 					<form onSubmit={handleSubmit} className='space-y-4'>
 						<Input
-							label='Secret Name *'
+							label='Name'
 							value={secretName}
 							onChange={(e) => setSecretName(e.target.value)}
 							placeholder='Enter the name of the secret'
 							required
+							disabled={isPending}
 						/>
 
 						<Input
-							label='Service Name *'
-							value={service}
-							onChange={(e) => setService(e.target.value)}
-							placeholder='Enter the service name'
+							label='Access Until'
+							type='number'
+							value={period}
+							onChange={(e) => setPeriod(+e.target.value)}
 							required
-						/>
-
-						<Input
-							label='Access Until *'
-							type='date'
-							value={expiresAt}
-							onChange={(e) => setExpiresAt(e.target.value)}
-							required
+							disabled={isPending}
+							min={new Date().toISOString().split('T')[0]} // Today's date
 						/>
 
 						<Textarea
-							label='Justification *'
+							label='Justification'
 							rows={4}
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
 							placeholder='Explain why you need access to this secret...'
 							required
+							disabled={isPending}
 						/>
 
 						<div className='flex justify-end space-x-3 pt-4'>
-							<Button type='button' variant='secondary' onClick={onClose}>
+							<Button
+								type='button'
+								variant='secondary'
+								onClick={handleClose}
+								disabled={isPending}
+							>
 								Cancel
 							</Button>
-							<Button type='submit' loading={loading}>
+							<Button type='submit' loading={isPending} disabled={isPending}>
 								Submit Request
 							</Button>
 						</div>

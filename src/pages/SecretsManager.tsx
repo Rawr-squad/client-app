@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useSecrets } from '../hooks/useSecrets';
 import { useSettingsStore } from '../store/settingsStore';
-import { Button } from './ui/Button';
-import { ErrorAlert } from './ui/ErrorAlert';
-import { LoadingSkeleton } from './ui/LoadingSkeleton';
-import { SecretCard } from './SecretCard';
-import { EmptyState } from './EmptyState';
-import { AccessRequestModal } from './AccessRequestModal';
-import { ProtectedSecretsRoute } from './ProtectedSecretsRoute';
+import { AccessRequestModal } from '../components/AccessRequestModal';
+import { EmptyState } from '../components/EmptyState';
+import { ProtectedSecretsRoute } from '../components/ProtectedSecretsRoute';
+import { SecretCard } from '../components/SecretCard';
+import { Button } from '../components/ui/Button';
+import { ErrorAlert } from '../components/ui/ErrorAlert';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 const SecretsContent: React.FC = () => {
 	const { secrets, loading, error, lastUpdated, refresh } = useSecrets();
@@ -29,13 +29,15 @@ const SecretsContent: React.FC = () => {
 			<div className='bg-white rounded-lg shadow-sm border p-6 mb-6'>
 				<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
 					<div className='flex items-center space-x-4'>
-						<Button onClick={refresh} loading={loading}>
-							Refresh Secrets
-						</Button>
+						<div className='rounded-full'>
+							<Button onClick={refresh} loading={loading}>
+								Refresh Secrets
+							</Button>
+						</div>
 
 						<Button
 							onClick={() => setIsRequestModalOpen(true)}
-							variant='secondary'
+							variant='primary'
 						>
 							Request Access
 						</Button>
@@ -77,7 +79,7 @@ const SecretsContent: React.FC = () => {
 			{secrets.length > 0 ? (
 				<div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
 					{secrets.map((secret) => (
-						<SecretCard key={secret.id} secret={secret} />
+						<SecretCard key={new Date().toString()} secret={secret} />
 					))}
 				</div>
 			) : (

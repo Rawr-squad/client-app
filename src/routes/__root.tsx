@@ -6,10 +6,10 @@ import {
 	Outlet,
 } from '@tanstack/react-router';
 import { Layout } from '../components/Layout';
-import { Dashboard } from '../components/Dashboard';
-import { SecretsManager } from '../components/SecretsManager';
-import { Settings } from '../components/Settings';
-import { Login } from '../components/Login';
+import { Dashboard } from '../pages/Dashboard';
+import { Login } from '../pages/Login';
+import { SecretsManager } from '../pages/SecretsManager';
+import { Settings } from '../pages/Settings';
 
 const rootRoute = createRootRoute({
 	component: () => (

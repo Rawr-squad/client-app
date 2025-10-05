@@ -1,6 +1,7 @@
 // src/services/cacheService.ts
 import { EncryptionService } from './encryption';
 import { useMasterPasswordStore } from '../store/masterPasswordStore';
+import type { Secret } from './secrets.api';
 
 export interface CacheItem<T> {
 	data: T;
@@ -14,8 +15,7 @@ export class CacheService {
 
 	static getEncryptionKey(): string {
 		const masterPassword = this.getMasterPasswordForEncryption();
-		const baseKey =
-			import.meta.env.VITE_ENCRYPTION_KEY || 'dev-secure-key-2024';
+		const baseKey = import.meta.env.VITE_ENCRYPTION_KEY || 'secure-key';
 		return `${baseKey}-${masterPassword}`;
 	}
 
@@ -27,11 +27,10 @@ export class CacheService {
 		}
 
 		// Use the password hash as part of the encryption key
-		// In a real app, you might want to derive this differently
 		return state.passwordHash || 'no-password-set';
 	}
 
-	static set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
+	static set(key: string, data: Secret, ttl: number = this.DEFAULT_TTL): void {
 		try {
 			const { passwordHash, checkLock } = useMasterPasswordStore.getState();
 
@@ -40,7 +39,7 @@ export class CacheService {
 				throw new Error('Master password required to encrypt data');
 			}
 
-			const cacheItem: CacheItem<T> = {
+			const cacheItem: CacheItem<Secret> = {
 				data,
 				timestamp: Date.now(),
 				expiresAt: Date.now() + ttl,
@@ -58,7 +57,7 @@ export class CacheService {
 		}
 	}
 
-	static get<T>(key: string): T | null {
+	static get(key: string): Secret | null {
 		try {
 			const { passwordHash, checkLock } = useMasterPasswordStore.getState();
 
@@ -74,7 +73,7 @@ export class CacheService {
 				encrypted,
 				this.getEncryptionKey()
 			);
-			const cacheItem: CacheItem<T> = JSON.parse(decrypted);
+			const cacheItem: CacheItem<Secret> = JSON.parse(decrypted);
 
 			if (Date.now() > cacheItem.expiresAt) {
 				this.remove(key);
@@ -88,33 +87,40 @@ export class CacheService {
 		}
 	}
 
-	// Clear all cached secrets (useful when changing master password)
-	static clearAllSecrets(): void {
-		Object.keys(localStorage)
-			.filter((key) => key.startsWith(this.CACHE_PREFIX))
-			.forEach((key) => localStorage.removeItem(key));
-	}
-
 	static remove(key: string): void {
 		localStorage.removeItem(`${this.CACHE_PREFIX}${key}`);
 	}
 
 	static clear(): void {
+		// Clear only cache items, not other localStorage data
 		Object.keys(localStorage)
 			.filter((key) => key.startsWith(this.CACHE_PREFIX))
 			.forEach((key) => localStorage.removeItem(key));
 	}
 
-	static getAllKeys(): string[] {
-		return Object.keys(localStorage)
-			.filter((key) => key.startsWith(this.CACHE_PREFIX))
-			.map((key) => key.replace(this.CACHE_PREFIX, ''));
+	static getAllKeys(): Secret[] | null {
+		const keys = Object.keys(localStorage);
+		const filteredKeys = keys.filter((key) =>
+			key.startsWith(this.CACHE_PREFIX)
+		);
+
+		return filteredKeys
+			? filteredKeys.map(
+					(key) => this.get(key.replace(this.CACHE_PREFIX, '')) as Secret
+			  )
+			: null;
 	}
 
-	static cleanup(): void {
-		const keys = this.getAllKeys();
-		keys.forEach((key) => {
-			this.get(key);
-		});
+	// static cleanup(): void {
+	// 	const keys = this.getAllKeys();
+
+	// 	keys?.forEach((key) => {
+	// 		this.get(key); // This will automatically remove expired items if unlocked
+	// 	});
+	// }
+
+	// Clear all cached secrets when changing master password
+	static clearAllSecrets(): void {
+		this.clear();
 	}
 }

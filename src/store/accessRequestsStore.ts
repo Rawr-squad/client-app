@@ -1,57 +1,58 @@
 // src/store/accessRequestStore.ts
 import { create } from 'zustand';
-import { secretsApi, type AccessRequest } from '../services/api';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface AccessRequestState {
-	requests: AccessRequest[];
-	loading: boolean;
-	error: string | null;
-	fetchRequests: () => Promise<void>;
-	requestAccess: (
-		request: Omit<
-			AccessRequest,
-			'id' | 'requestedBy' | 'requestedAt' | 'status'
-		>
-	) => Promise<void>;
+	// Local state for UI purposes only
+	selectedRequestId: string | null;
+	filters: {
+		status: 'all' | 'pending' | 'approved' | 'rejected';
+		service: string;
+	};
+
+	// Actions
+	setSelectedRequest: (id: string | null) => void;
+	setFilters: (filters: Partial<AccessRequestState['filters']>) => void;
+	clearFilters: () => void;
 }
 
-export const useAccessRequestStore = create<AccessRequestState>((set, get) => ({
-	requests: [],
-	loading: false,
-	error: null,
+export const useAccessRequestStore = create<AccessRequestState>()(
+	persist(
+		(set) => ({
+			// Initial state
+			selectedRequestId: null,
+			filters: {
+				status: 'all',
+				service: '',
+			},
 
-	fetchRequests: async () => {
-		set({ loading: true, error: null });
-		try {
-			const requests = await secretsApi.getAccessRequests();
-			set({ requests, loading: false });
-		} catch (error) {
-			set({
-				error:
-					error instanceof Error
-						? error.message
-						: 'Failed to fetch access requests',
-				loading: false,
-			});
-		}
-	},
+			// Actions
+			setSelectedRequest: (id) => {
+				set({ selectedRequestId: id });
+			},
 
-	requestAccess: async (requestData) => {
-		set({ loading: true, error: null });
-		try {
-			const newRequest = await secretsApi.requestAccess(requestData);
-			set({
-				requests: [newRequest, ...get().requests],
-				loading: false,
-			});
-		} catch (error) {
-			set({
-				error:
-					error instanceof Error
-						? error.message
-						: 'Failed to submit access request',
-				loading: false,
-			});
+			setFilters: (newFilters) => {
+				set((state) => ({
+					filters: { ...state.filters, ...newFilters },
+				}));
+			},
+
+			clearFilters: () => {
+				set({
+					filters: {
+						status: 'all',
+						service: '',
+					},
+				});
+			},
+		}),
+		{
+			name: 'access-requests-ui-storage',
+			storage: createJSONStorage(() => localStorage),
+			partialize: (state) => ({
+				filters: state.filters,
+				selectedRequestId: state.selectedRequestId,
+			}),
 		}
-	},
-}));
+	)
+);

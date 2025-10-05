@@ -1,13 +1,17 @@
 // src/store/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { CacheService } from '../services/cacheService';
+import type { User } from '../services/auth.api';
 
 interface AuthState {
-	user: { id: string; email: string } | null;
+	user: User | null;
 	token: string | null;
 	isAuthenticated: boolean;
-	login: (email: string, password: string) => Promise<void>;
-	logout: () => void;
+
+	// Pure state actions - no API calls here!
+	setAuth: (user: User, token: string) => void;
+	clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -16,17 +20,40 @@ export const useAuthStore = create<AuthState>()(
 			user: null,
 			token: null,
 			isAuthenticated: false,
-			login: async (email: string, password: string) => {
-				// Mock login for hackathon
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			setAuth: (user: User, token: string) => {
 				set({
-					user: { id: '1', email },
-					token: 'mock-jwt-token',
+					user,
+					token,
 					isAuthenticated: true,
 				});
+				localStorage.setItem('auth_token', token);
 			},
-			logout: () => set({ user: null, token: null, isAuthenticated: false }),
+
+			clearAuth: () => {
+				CacheService.clear();
+				localStorage.removeItem('auth_token');
+				set({
+					user: null,
+					token: null,
+					isAuthenticated: false,
+				});
+			},
 		}),
-		{ name: 'auth-storage' }
+		{
+			name: 'auth-storage',
+			storage: {
+				getItem: (name) => {
+					const str = localStorage.getItem(name);
+					return str ? JSON.parse(str) : null;
+				},
+				setItem: (name, value) => {
+					localStorage.setItem(name, JSON.stringify(value));
+				},
+				removeItem: (name) => {
+					localStorage.removeItem(name);
+				},
+			},
+		}
 	)
 );

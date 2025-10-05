@@ -53,7 +53,7 @@ export const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
 
 	const handleKeyPress = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter') {
-			handleSubmit(e as any);
+			handleSubmit(e);
 		}
 	};
 
@@ -68,10 +68,10 @@ export const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
 							<span className='text-white font-bold text-xl'>🔒</span>
 						</div>
 						<h3 className='text-lg font-medium text-gray-900'>
-							Master Password Required
+							Требуется мастер-пароль
 						</h3>
 						<p className='mt-2 text-sm text-gray-500'>
-							Enter your master password to view secrets
+							Введите установленный вами мастер-пароль для доступа к секретам
 						</p>
 					</div>
 
@@ -79,7 +79,7 @@ export const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
 
 					<form onSubmit={handleSubmit} className='space-y-4'>
 						<Input
-							label='Master Password'
+							// label='Мастер-пароль'
 							type='password'
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
@@ -88,16 +88,16 @@ export const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
 							autoFocus
 						/>
 
-						<div className='flex justify-end space-x-3 pt-4'>
-							<Button
-								type='submit'
-								loading={isLoading}
-								disabled={!password.trim()}
-								className='w-full'
-							>
-								Unlock Secrets
-							</Button>
-						</div>
+						{/* <div className='flex justify-end space-x-3 pt-4'> */}
+						<Button
+							type='submit'
+							loading={isLoading}
+							disabled={!password.trim()}
+							className='w-sm'
+						>
+							Unlock Secrets
+						</Button>
+						{/* </div> */}
 					</form>
 				</div>
 			</div>

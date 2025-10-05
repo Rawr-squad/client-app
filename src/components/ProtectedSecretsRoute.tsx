@@ -13,7 +13,7 @@ export const ProtectedSecretsRoute: React.FC<ProtectedSecretsRouteProps> = ({
 }) => {
 	const [showMasterPassword, setShowMasterPassword] = useState(false);
 	const [showSetupPassword, setShowSetupPassword] = useState(false);
-	const { checkLock, passwordHash } = useMasterPasswordStore();
+	const { checkLock, passwordHash, lastUnlockTime } = useMasterPasswordStore();
 
 	useEffect(() => {
 		const isUnlocked = checkLock();
@@ -33,7 +33,7 @@ export const ProtectedSecretsRoute: React.FC<ProtectedSecretsRouteProps> = ({
 			setShowMasterPassword(false);
 			setShowSetupPassword(false);
 		}
-	}, [checkLock, passwordHash]);
+	}, [checkLock, lastUnlockTime, passwordHash]);
 
 	const handleUnlockSuccess = () => {
 		setShowMasterPassword(false);
